@@ -1,0 +1,26 @@
+version: '3'
+
+services:
+
+  server:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "7000:7000"
+    environment:
+      - CONFIG_FILE=config.toml
+
+  client:
+    build:
+      context: ./client
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    environment:
+      - REACT_APP_SERVER_URL=http://server:7000/ws
+    depends_on:
+      - server
+
+volumes:
+  config:
