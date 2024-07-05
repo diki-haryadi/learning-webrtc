@@ -4,17 +4,15 @@ FROM node:16.20.1-alpine
 # Set the working directory to /app
 WORKDIR /app
 
-# Copy the package.json and package-lock.json files
-COPY package*.json ./
-
-# Install the dependencies
-RUN npm ci
-
 # Copy the rest of the application code
 COPY . .
 
+# Install the dependencies
+# RUN npm install
+
 # Build the React application
-RUN npm run build
+# RUN npm run build
+RUN npm install -g serve
 
 # Serve the built application
-CMD ["npm", "run", "serve", "-s", "build"]
+CMD ["serve", "-s", "build"]
