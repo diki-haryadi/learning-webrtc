@@ -16,7 +16,7 @@ export const Receiver: React.FC<any> = ({ senderStreamID }) => {
 
   const handleStartPublishing = async () => {
     websocket.current = new WebSocket(
-      'ws://ws.haryadi.my.id/ws'
+      'wss://ws.haryadi.my.id/ws'
     );
     // websocket.current = new WebSocket("ws://ec2-54-248-35-65.ap-northeast-1.compute.amazonaws.com:7000/ws");
     pcSend.current = new RTCPeerConnection();
