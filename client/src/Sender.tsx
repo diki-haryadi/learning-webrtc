@@ -50,7 +50,7 @@ export const Sender: React.FC<any> = ({ setSenderStreamID }) => {
     }
 
     websocket.current = new WebSocket(
-      'ws://103.150.93.88:7000/ws'
+      'ws://ws.haryadi.my.id/ws'
     );
     websocket.current.onopen = () => console.log('connection opened');
     websocket.current.onmessage = async (e) => {
