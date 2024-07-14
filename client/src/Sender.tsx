@@ -1,7 +1,7 @@
 import {useCallback, useEffect, useRef, useState} from 'react';
 import { AiOutlineAudio, AiOutlineAudioMuted } from 'react-icons/ai';
 import { FiVideo, FiVideoOff } from 'react-icons/fi';
-import { MdScreenShare,MdStopScreenShare } from 'react-icons/md';
+import {MdScreenShare, MdStopScreenShare, MdOutlineExitToApp} from 'react-icons/md';
 
 export const Sender: React.FC<any> = ({ setSenderStreamID }) => {
   const sentVideoRef = useRef<HTMLVideoElement>(null);
@@ -12,6 +12,28 @@ export const Sender: React.FC<any> = ({ setSenderStreamID }) => {
   const [muted, setMuted] = useState(false);
 
   const [screenShareEnabled, setScreenShareEnabled] = useState<MediaStreamTrack>();
+  const [isLeaving, setIsleaving] = useState(false)
+
+
+  const handleLeave = async () => {
+    setIsleaving(true);
+
+    // Close the websocket connection
+    if (websocket.current) {
+      websocket.current.close();
+    }
+
+    // Close the peer connection
+    if (pcSend.current) {
+      pcSend.current.close();
+    }
+    setConnectionState('disconnected');
+    // Remove the user from the room
+    // await peer.leave();
+
+    // Broadcast the stream update to other users
+    // await broadcastStreamUpdate();
+  }
 
   const [connectionState, setConnectionState] =
     useState<RTCPeerConnectionState>('new');
@@ -50,7 +72,7 @@ export const Sender: React.FC<any> = ({ setSenderStreamID }) => {
     }
 
     websocket.current = new WebSocket(
-      'wss://ws.haryadi.my.id/ws'
+      'ws://127.0.0.1:7001/ws?room_id=join-app'
     );
     websocket.current.onopen = () => console.log('connection opened');
     websocket.current.onmessage = async (e) => {
@@ -95,7 +117,7 @@ export const Sender: React.FC<any> = ({ setSenderStreamID }) => {
       if (event.candidate && connectionState === 'connected') {
         websocket.current?.send(
           JSON.stringify({
-            type: 'tricle',
+            type: 'trickle',
             data: JSON.stringify({
               target: 0,
               candidates: event.candidate,
@@ -158,55 +180,60 @@ export const Sender: React.FC<any> = ({ setSenderStreamID }) => {
   }
 
   return (
-    <div className="w-full h-full">
-      <video
-        className="object-cover h-full w-full"
-        autoPlay
-        muted
-        ref={sentVideoRef}
-      ></video>
-      {['new', 'disconnected', 'failed'].includes(connectionState) && (
-        <button
-          className="bg-blue-700 absolute bottom-5 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-white max-h-10 max-w-52 rounded-md px-5 py-2"
-          onClick={handleStartPublishing}
-        >
-          JOIN
-        </button>
-      )}
-      {connectionState === 'connecting' && (
-        <p className="absolute bottom-5 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-white max-h-10 max-w-52 rounded-md px-5 py-2">
-          connecting...
-        </p>
-      )}
-      {connectionState === 'connected' && (
-        <div className="absolute bottom-5 left-1/2 transform -translate-x-1/2 -translate-y-1/2 flex flex-row">
-          <button
-            className={`${muted ? 'bg-red-700' : 'bg-gray-800'
-              } transition duration-500 text-white max-h-10 max-w-52 rounded-md px-5 py-2`}
-            onClick={() => {
-              const video = sentVideoRef.current?.srcObject as MediaStream;
-              video.getAudioTracks().forEach((t) => (t.enabled = !t.enabled));
-              setMuted((m) => !m);
-            }}
-          >
-            {muted ? <AiOutlineAudioMuted /> : <AiOutlineAudio />}
-          </button>
-          <button
-            className={`${videoMuted ? 'bg-red-700' : 'bg-gray-800'
-              } transition duration-500  ml-2 text-white max-h-10 max-w-52 rounded-md px-5 py-2`}
-            onClick={() => {
-              const video = sentVideoRef.current?.srcObject as MediaStream;
-              video.getVideoTracks().forEach((t) => (t.enabled = !t.enabled));
-              setVideoMuted((m) => !m);
-            }}
-          >
-            {videoMuted ? <FiVideoOff /> : <FiVideo />}
-          </button>
-          <button onClick={handleScreenShare} className={`${!!screenShareEnabled ? "bg-gray-800": "bg-red-800" } transition duration-500  ml-2 text-white max-h-10 max-w-52 rounded-md px-5 py-2`}>
-          {screenShareEnabled?<MdScreenShare/> : <MdStopScreenShare/>}
-          </button>
-        </div>
-      )}
-    </div>
+      <div className="w-full h-full">
+        <video
+            className="object-cover h-full w-full"
+            autoPlay
+            muted
+            ref={sentVideoRef}
+        ></video>
+        {['new', 'disconnected', 'failed'].includes(connectionState) && (
+            <button
+                className="bg-blue-700 absolute bottom-5 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-white max-h-10 max-w-52 rounded-md px-5 py-2"
+                onClick={handleStartPublishing}
+            >
+              JOIN
+            </button>
+        )}
+        {connectionState === 'connecting' && (
+            <p className="absolute bottom-5 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-white max-h-10 max-w-52 rounded-md px-5 py-2">
+              connecting...
+            </p>
+        )}
+        {connectionState === 'connected' && (
+            <div className="absolute bottom-5 left-1/2 transform -translate-x-1/2 -translate-y-1/2 flex flex-row">
+              <button
+                  className={`${muted ? 'bg-red-700' : 'bg-gray-800'
+                  } transition duration-500 text-white max-h-10 max-w-52 rounded-md px-5 py-2`}
+                  onClick={() => {
+                    const video = sentVideoRef.current?.srcObject as MediaStream;
+                    video.getAudioTracks().forEach((t) => (t.enabled = !t.enabled));
+                    setMuted((m) => !m);
+                  }}
+              >
+                {muted ? <AiOutlineAudioMuted/> : <AiOutlineAudio/>}
+              </button>
+              <button
+                  className={`${videoMuted ? 'bg-red-700' : 'bg-gray-800'
+                  } transition duration-500  ml-2 text-white max-h-10 max-w-52 rounded-md px-5 py-2`}
+                  onClick={() => {
+                    const video = sentVideoRef.current?.srcObject as MediaStream;
+                    video.getVideoTracks().forEach((t) => (t.enabled = !t.enabled));
+                    setVideoMuted((m) => !m);
+                  }}
+              >
+                {videoMuted ? <FiVideoOff/> : <FiVideo/>}
+              </button>
+              <button onClick={handleScreenShare}
+                      className={`${!!screenShareEnabled ? "bg-red-800" : "bg-gray-800"} transition duration-500  ml-2 text-white max-h-10 max-w-52 rounded-md px-5 py-2`}>
+                {screenShareEnabled ? <MdStopScreenShare/> : <MdScreenShare/>}
+              </button>
+              <button onClick={handleLeave}
+                      className={`${isLeaving ? "bg-gray-800" : "bg-red-800"} transition duration-500  ml-2 text-white max-h-10 max-w-52 rounded-md px-5 py-2`}>
+                {<MdOutlineExitToApp/>}
+              </button>
+            </div>
+        )}
+      </div>
   );
 };
