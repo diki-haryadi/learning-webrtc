@@ -139,7 +139,7 @@ func NewWebsocketHandlerWithRedis(s *sfu.SFU) func(w http.ResponseWriter, req *h
 		}()
 
 		peer := sfu.NewPeer(s)
-		err = peer.Join("room-id", roomID)
+		err = peer.Join("room-id", "roomID")
 		if err != nil {
 			fmt.Println("error join session=>>", roomID)
 			fmt.Println(err)

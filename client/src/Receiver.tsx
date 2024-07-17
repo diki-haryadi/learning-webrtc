@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { AiFillPushpin } from 'react-icons/ai';
-import {useBufferedState} from "./useBufferedState";
-let es: EventSource | null;
+// import {useBufferedState} from "./useBufferedState";
+// let es: EventSource | null;
 export const Receiver: React.FC<any> = ({ senderStreamID }) => {
   const websocket = useRef<WebSocket>();
   const pcSend = useRef<RTCPeerConnection>();
@@ -9,34 +9,34 @@ export const Receiver: React.FC<any> = ({ senderStreamID }) => {
 
   const [pinStream, setPinStream] = useState<MediaStream | null>(null);
 
-  const [buffer, push] = useBufferedState(10);
+  // const [buffer, push] = useBufferedState(10);
 
-  const url = "http://localhost:7002";
+  // const url = "http://localhost:7002";
 
-  const handleStreamStart = () => {
-    if (!es) {
-      es = new EventSource(`${url}/sse`);
-      push("event source start");
-      es.onmessage = (msg) => {
-        push(msg.data);
-      };
-    }
-  };
+  // const handleStreamStart = () => {
+  //   if (!es) {
+  //     es = new EventSource(`${url}/sse`);
+  //     push("event source start");
+  //     es.onmessage = (msg) => {
+  //       push(msg.data);
+  //     };
+  //   }
+  // };
 
-  const handleStreamStop = () => {
-    if (es) {
-      es.close();
-      push("close event source");
-      es = null;
-    }
-  };
+  // const handleStreamStop = () => {
+  //   if (es) {
+  //     es.close();
+  //     push("close event source");
+  //     es = null;
+  //   }
+  // };
 
-  const sendRequest = async (method: string) => {
-    await fetch(`${url}/log`, {
-      body: method !== "GET" ? Math.random().toString() : null,
-      method
-    })
-  }
+  // const sendRequest = async (method: string) => {
+  //   await fetch(`${url}/log`, {
+  //     body: method !== "GET" ? Math.random().toString() : null,
+  //     method
+  //   })
+  // }
 
   useEffect(() => {
     handleStartPublishing();
@@ -77,6 +77,7 @@ export const Receiver: React.FC<any> = ({ senderStreamID }) => {
       if (response.candidate && response.target === 1) {
         pcSend.current?.addIceCandidate(response.candidate);
         console.log('add-ice-candidate');
+        console.log(streams)
       }
     };
 
@@ -92,20 +93,48 @@ export const Receiver: React.FC<any> = ({ senderStreamID }) => {
     //     recvVideoRef.current.srcObject = e.streams[0];
     //   }
     // };
+    // pcSend.current.ontrack = (e) => {
+    //   console.log('got-streams: ', e.streams);
+    //   e.streams[0].onremovetrack = () => {
+    //     console.log('onremove track');
+    //     console.log(e)
+    //     setStreams((s) => s.filter((str) => str.id !== e.streams[0].id));
+    //   };
+    //   setStreams((s) => {
+    //     if (e.streams.length === 1 && e.streams[0].active) {
+    //       if (s.map((s) => s.id).indexOf(e.streams[0].id) === -1) {
+    //         s.push(e.streams[0]);
+    //       }
+    //     }
+    //     return s;
+    //   });
+    // };
+
     pcSend.current.ontrack = (e) => {
       console.log('got-streams: ', e.streams);
+
+      // Check if the stream is already in the list
+      const existingStream = streams.find((s) => s.id === e.streams[0].id);
+
+      if (e.streams.length === 1 && e.streams[0].active) {
+        if (!existingStream) {
+          // Add the new stream to the list
+          setStreams((s) => [...s, e.streams[0]]);
+        } else {
+          // Update the existing stream in the list
+          setStreams((s) => s.map((s) => (s.id === e.streams[0].id ? e.streams[0] : s)));
+        }
+      } else if (existingStream) {
+        // Remove the stream from the list if it's no longer active
+        setStreams((s) => s.filter((str) => str.id !== e.streams[0].id));
+      }
+
+      // Add a listener to the stream to detect when it's removed
       e.streams[0].onremovetrack = () => {
         console.log('onremove track');
+        console.log(e);
         setStreams((s) => s.filter((str) => str.id !== e.streams[0].id));
       };
-      setStreams((s) => {
-        if (e.streams.length === 1 && e.streams[0].active) {
-          if (s.map((s) => s.id).indexOf(e.streams[0].id) === -1) {
-            s.push(e.streams[0]);
-          }
-        }
-        return s;
-      });
     };
 
     pcSend.current.onicecandidate = (event) => {
@@ -125,26 +154,26 @@ export const Receiver: React.FC<any> = ({ senderStreamID }) => {
 
   return (
       <div className="grid grid-cols-3 gap-x-10 gap-y-10 p-20">
-        <h1>Event Streaming </h1>
-        <button onClick={handleStreamStart}>Start Streaming</button>
-        <button onClick={handleStreamStop}>Stop Streaming</button>
-        <br/>
-        <br/>
-        <button onClick={() => sendRequest("POST")}>POST TO /log</button>
-        <button onClick={() => sendRequest("GET")}>GET TO /log</button>
-        <button onClick={() => sendRequest("DELETE")}>
-          DELETE TO /log
-        </button>
-        <button onClick={() => sendRequest("PATCH")}>
-          PATCH TO /log
-        </button>
-        <br/>
-        <div className="messages">
-          messages
-          {buffer.map((d, i) => (
-              <pre key={i + Math.random()}>{d}</pre>
-          ))}
-        </div>
+        {/*<h1>Event Streaming </h1>*/}
+        {/*<button onClick={handleStreamStart}>Start Streaming</button>*/}
+        {/*<button onClick={handleStreamStop}>Stop Streaming</button>*/}
+        {/*<br/>*/}
+        {/*<br/>*/}
+        {/*<button onClick={() => sendRequest("POST")}>POST TO /log</button>*/}
+        {/*<button onClick={() => sendRequest("GET")}>GET TO /log</button>*/}
+        {/*<button onClick={() => sendRequest("DELETE")}>*/}
+        {/*  DELETE TO /log*/}
+        {/*</button>*/}
+        {/*<button onClick={() => sendRequest("PATCH")}>*/}
+        {/*  PATCH TO /log*/}
+        {/*</button>*/}
+        {/*<br/>*/}
+        {/*<div className="messages">*/}
+        {/*  messages*/}
+        {/*  {buffer.map((d, i) => (*/}
+        {/*      <pre key={i + Math.random()}>{d}</pre>*/}
+        {/*  ))}*/}
+        {/*</div>*/}
         {connectionState !== 'connected' && (
             <p className="fixed right-1/2 top-1/2 transform translate-x-1/2 -translate-y-1/2 text-white">
               RETREIVING VIDEOS...
@@ -153,6 +182,7 @@ export const Receiver: React.FC<any> = ({ senderStreamID }) => {
 
         {streams
             .filter((s) => s.id !== senderStreamID && s.active)
+            // .filter((s) => s.id && s.active)
             .map((stream, index) => (
                 <div
                     className={` rounded-3xl overflow-hidden bg-gray-900 group transition duration-500 ${
@@ -162,6 +192,7 @@ export const Receiver: React.FC<any> = ({ senderStreamID }) => {
                     }`}
                     key={stream.id}
                 >
+
                   <Video srcObject={stream}/>
                   <p className="absolute text-white top-0 left-3">
                     FRIEND {index + 1}

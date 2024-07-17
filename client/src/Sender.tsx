@@ -81,7 +81,8 @@ export const Sender: React.FC<any> = ({ setSenderStreamID }) => {
         await pcSend.current?.setRemoteDescription(response);
         console.log('set-remote-description');
       }
-
+      console.log("response")
+      console.log(response)
       if (response.candidate && response.target === 0) {
         await pcSend.current?.addIceCandidate(response.candidate);
         console.log('add-ice-candidate');
